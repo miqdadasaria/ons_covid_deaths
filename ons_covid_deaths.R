@@ -15,6 +15,7 @@ deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip
   ungroup() %>%
   mutate(place_of_death = str_replace(place_of_death," establishment",""))
 
+population = read_csv("data/la_population.csv")
 
 plot_la_deaths = function(la_name){
   la_deaths = deaths %>% filter(area_name == la_name)
@@ -52,6 +53,11 @@ raw_data = function(){
   raw_data = deaths %>% 
     spread(place_of_death, number_of_deaths) %>% 
     mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`) %>%
-    select(LA = area_name, Cause = cause_of_death, 4:10)
+    inner_join(population %>% select(area_code=area_codes,population=all_ages)) %>%
+    mutate(`Deaths per 100k pop` = round(Total*100000/population)) %>%
+    select(LA = area_name, Population = population, Cause = cause_of_death, Hospital, `Care home`, Home, Hospice, `Other communal`, Elsewhere, `Deaths per 100k pop`) %>%
+    arrange(desc(Cause),desc(`Deaths per 100k pop`))
   return(raw_data)
 }
+
+
