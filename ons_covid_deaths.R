@@ -17,7 +17,14 @@ deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip
 
 
 plot_la_deaths = function(la_name){
-  la_plot = ggplot(deaths %>% filter(area_name == la_name), aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
+  la_deaths = deaths %>% filter(area_name == la_name)
+  totals = la_deaths %>% 
+    group_by(cause_of_death) %>% 
+    summarise(total = sum(number_of_deaths)) %>% 
+    ungroup() %>% 
+    spread(cause_of_death, total) 
+  
+  la_plot = ggplot(la_deaths, aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
     geom_col(position="dodge", colour="black") + 
     geom_text(aes(label = scales::comma(number_of_deaths)), position = position_dodge(width = 1), vjust = -0.5, hjust=0.5, size=3.5) +
     xlab("Place of death") +
@@ -27,15 +34,21 @@ plot_la_deaths = function(la_name){
     theme(panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(), 
           plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
           legend.title = element_blank(), 
           legend.position = "top") +
-    labs(title = paste0("Number of deaths in ",la_name," up to 10th April 2020"),
-         subtitle = paste0("ONS deaths (occurrences)"),
-         caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS") 
+    labs(title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)"),
+         subtitle = paste0("Total COVID-19: ",totals[[1]]," Total All causes: ",totals[[2]]),
+         caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
   
   return(la_plot)
 }
 
 get_la_list = function(){
   deaths %>% distinct(area_name) %>% arrange(area_name) %>% pull()
+}
+
+raw_data = function(){
+  raw_data = deaths %>% spread(place_of_death, number_of_deaths) %>% mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`)
+  return(raw_data)
 }

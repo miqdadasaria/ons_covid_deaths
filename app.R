@@ -11,7 +11,7 @@ library("DT")
 source("ons_covid_deaths.R")
 
 ui = fluidPage(
-  titlePanel("ONS Covid Deaths Explorer"),
+  titlePanel("ONS COVID-19 Deaths Explorer"),
   sidebarLayout(
     sidebarPanel(
       tags$h4("Select local authority"),
@@ -28,7 +28,7 @@ ui = fluidPage(
     
     mainPanel(
       tabsetPanel(id="tabset",
-                  tabPanel("Deaths in local authority", plotOutput("ons_death_plot")),
+                  tabPanel("Deaths in local authority", plotOutput("ons_death_plot", height="600px")),
                   tabPanel("Raw data", div(dataTableOutput("raw_data"), style = "font-size:70%"))
       )
     )
@@ -43,7 +43,8 @@ server = function(input, output) {
   })
   
   output$raw_data = renderDataTable({
-    datatable(deaths,
+    datatable(raw_data(),
+              filter = "top",
               style = 'bootstrap',
               rownames = FALSE,
               options = list(pageLength = 20, autoWidth = TRUE, dom='ftrpi'))
