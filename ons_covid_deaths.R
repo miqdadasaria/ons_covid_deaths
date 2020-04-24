@@ -49,6 +49,9 @@ get_la_list = function(){
 }
 
 raw_data = function(){
-  raw_data = deaths %>% spread(place_of_death, number_of_deaths) %>% mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`)
+  raw_data = deaths %>% 
+    spread(place_of_death, number_of_deaths) %>% 
+    mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`) %>%
+    select(LA = area_name, Cause = cause_of_death, 4:10)
   return(raw_data)
 }
