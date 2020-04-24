@@ -55,7 +55,7 @@ raw_data = function(){
     mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`) %>%
     inner_join(population %>% select(area_code=area_codes,population=all_ages)) %>%
     mutate(`Deaths per 100k pop` = round(Total*100000/population)) %>%
-    select(LA = area_name, Population = population, Cause = cause_of_death, Hospital, `Care home`, Home, Hospice, `Other communal`, Elsewhere, `Deaths per 100k pop`) %>%
+    select(LA = area_name, Population = population, Cause = cause_of_death, Hospital, `Care home`, Home, Hospice, `Other communal`, Elsewhere, Total, `Deaths per 100k pop`) %>%
     arrange(desc(Cause),desc(`Deaths per 100k pop`))
   return(raw_data)
 }
