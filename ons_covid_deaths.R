@@ -3,10 +3,6 @@ library("readxl")
 library("RSQLite")
 library("janitor")
 library("rgdal")
-library("rmapshaper")
-library("tmap")
-library("tmaptools")
-library("sf")
 library("leaflet")
 
 # ons_deaths_source = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fhealthandsocialcare%2fcausesofdeath%2fdatasets%2fdeathregistrationsandoccurrencesbylocalauthorityandhealthboard%2f2020/lahbtables.xlsx"
