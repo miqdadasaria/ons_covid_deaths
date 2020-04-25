@@ -7,6 +7,7 @@
 
 library("shiny")
 library("DT")
+library("plotly")
 
 source("ons_covid_deaths.R")
 
@@ -29,7 +30,8 @@ ui = fluidPage(
     
     mainPanel(
       tabsetPanel(id="tabset",
-                  tabPanel("Deaths in local authority", plotOutput("ons_death_plot", height="600px")),
+                  tabPanel("Deaths in local authority (Total)", plotOutput("ons_death_plot", height="600px")),
+                  tabPanel("Deaths in local authority (weekly)", plotlyOutput("ons_weekly_death_plot")),
                   tabPanel("Raw data", div(dataTableOutput("raw_data"), style = "font-size:70%"))
       )
     )
@@ -41,6 +43,10 @@ server = function(input, output) {
   
   output$ons_death_plot = renderPlot({
     plot_la_deaths(input$local_authority)
+  })
+  
+  output$ons_weekly_death_plot = renderPlotly({
+    plot_la_deaths_by_week(input$local_authority)
   })
   
   output$raw_data = renderDataTable({

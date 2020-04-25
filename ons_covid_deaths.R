@@ -7,13 +7,15 @@ library("janitor")
 # ons_deaths_dest = "data/ons_deaths.xlsx"
 # download.file(url=ons_deaths_source, destfile=ons_deaths_dest, method = "auto", quiet=FALSE)
 
-deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip=3) %>% 
+weekly_deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip=3) %>% 
   clean_names() %>%
   filter(geography_type == "Local Authority") %>%
-  group_by(area_code, area_name, cause_of_death, place_of_death) %>%
-    summarise(number_of_deaths = sum(number_of_deaths)) %>%
-  ungroup() %>%
   mutate(place_of_death = str_replace(place_of_death," establishment",""))
+  
+deaths = weekly_deaths %>% 
+  group_by(area_code, area_name, cause_of_death, place_of_death) %>%
+  summarise(number_of_deaths = sum(number_of_deaths)) %>%
+  ungroup() 
 
 population = read_csv("data/la_population.csv")
 
@@ -40,6 +42,39 @@ plot_la_deaths = function(la_name){
           legend.position = "top") +
     labs(title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)"),
          subtitle = paste0("Total COVID-19: ",totals[[1]]," Total All causes: ",totals[[2]]),
+         caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
+  
+  return(la_plot)
+}
+
+plot_la_deaths_by_week = function(la_name){
+  la_deaths = weekly_deaths %>% 
+    filter(area_name == la_name) %>% 
+    select(cause_of_death, week_number, place_of_death, number_of_deaths)
+ 
+   totals = la_deaths %>% 
+    group_by(week_number, cause_of_death) %>% 
+    summarise(place_of_death = "Total", 
+              number_of_deaths = sum(number_of_deaths)) %>% 
+    ungroup()
+
+  
+  la_plot = ggplot(bind_rows(la_deaths, totals), 
+                   aes(x=week_number, y=number_of_deaths, group=place_of_death, colour=place_of_death)) +
+    geom_point() + 
+    geom_smooth(se=FALSE) +
+    xlab("Week") +
+    ylab("Number of deaths") +
+    scale_color_brewer(type="qual") + 
+    facet_wrap(.~cause_of_death, scales="free_y") +
+    theme_bw() + 
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(), 
+          plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
+          legend.title = element_blank(), 
+          legend.position = "top") +
+    labs(title = paste0("Number of deaths in ",la_name),
+         subtitle = paste0("Deaths by week up to 10th April 2020"),
          caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
   
   return(la_plot)
