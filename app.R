@@ -8,6 +8,7 @@
 library("shiny")
 library("DT")
 library("plotly")
+library("leaflet")
 
 source("ons_covid_deaths.R")
 
@@ -30,6 +31,7 @@ ui = fluidPage(
     
     mainPanel(
       tabsetPanel(id="tabset",
+                  tabPanel("Map", leafletOutput("la_map", height="600px")),
                   tabPanel("Deaths in local authority (Total)", plotOutput("ons_death_plot", height="600px")),
                   tabPanel("Deaths in local authority (weekly)", plotlyOutput("ons_weekly_death_plot")),
                   tabPanel("Raw data", div(dataTableOutput("raw_data"), style = "font-size:70%"))
@@ -55,6 +57,10 @@ server = function(input, output) {
               style = 'bootstrap',
               rownames = FALSE,
               options = list(pageLength = 20, autoWidth = TRUE, dom='ftrpi'))
+  })
+  
+  output$la_map = renderLeaflet({
+    choropleth_map()
   })
 }
 
