@@ -33,8 +33,8 @@ ui = fluidPage(
       tabsetPanel(id="tabset",
                   tabPanel("Map", leafletOutput("la_map", height="600px")),
                   tabPanel("Deaths in local authority (Total)", plotOutput("ons_death_plot", height="600px")),
-                  tabPanel("Deaths in local authority (weekly)", plotlyOutput("ons_weekly_death_plot")),
-                  tabPanel("Deaths in by BAME population (%)", plotlyOutput("ons_bame_death_plot")),
+                  tabPanel("Deaths in local authority (weekly)", plotlyOutput("ons_weekly_death_plot",height="500px")),
+                  tabPanel("Deaths by BAME population (%)", plotlyOutput("ons_bame_death_plot",height="500px")),
                   tabPanel("Raw data", div(dataTableOutput("raw_data"), style = "font-size:70%"))
       )
     )
