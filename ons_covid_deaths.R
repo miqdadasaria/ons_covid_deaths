@@ -4,6 +4,7 @@ library("RSQLite")
 library("janitor")
 library("rgdal")
 library("leaflet")
+library("scales")
 
 # ons_deaths_source = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fhealthandsocialcare%2fcausesofdeath%2fdatasets%2fdeathregistrationsandoccurrencesbylocalauthorityandhealthboard%2f2020/lahbtables.xlsx"
 # ons_deaths_dest = "data/ons_deaths.xlsx"
@@ -19,7 +20,42 @@ deaths = weekly_deaths %>%
   summarise(number_of_deaths = sum(number_of_deaths)) %>%
   ungroup() 
 
-population = read_csv("data/la_population.csv")
+population = read_csv("data/la_population.csv") %>% select(1:3)
+
+ethnicity = read_csv("data/ethnicity_summary_lad.csv") %>% 
+  filter(ethnicity=="White") %>% 
+  mutate(BAME=1-proportion) %>% 
+  select(LAD19CD,BAME)
+
+plot_la_ethnicity_deaths = function(){
+  graph_data = deaths %>% 
+    group_by(area_code, cause_of_death) %>% 
+    summarise(total = sum(number_of_deaths)) %>% 
+    ungroup() %>% 
+    inner_join(population, by=c("area_code"="area_codes")) %>%
+    inner_join(ethnicity, by=c("area_code"="LAD19CD")) %>%
+    mutate(deaths_per_100k = 100000*total/all_ages) %>%
+    select(LA = la_2019_boundaries, BAME, `Deaths per 100k population`=deaths_per_100k, `Cause of Death`=cause_of_death, `Total Deaths`=total)
+  
+  eth_plot = ggplot(graph_data, aes(x=BAME,y=`Deaths per 100k population`,label=LA)) +
+    geom_point(aes(size=`Total Deaths`)) + 
+    geom_smooth(method="lm") +
+    xlab("Percentage of population BAME (%)") +
+    ylab("Number of deaths per 100k population") +
+    scale_x_continuous(labels = scales::percent) +
+    facet_wrap(.~`Cause of Death`, scales="free_y") +
+    theme_bw(base_size = 10) + 
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank(), 
+          plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
+          legend.position = "top") +
+    labs(title = paste0("Number of deaths in LA against BAME (%)"),
+         subtitle = paste0("Deaths up to 10th April 2020"),
+         caption = "Data are from the ONS deaths (occurrences registered by 18th April 2020) and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup)") 
+  
+  return(eth_plot)
+}
+
 
 plot_la_deaths = function(la_name){
   la_deaths = deaths %>% filter(area_name == la_name)
