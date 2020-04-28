@@ -43,7 +43,7 @@ plot_cases = function(){
             legend.position = "top") +
       labs(title = paste0("Number of COVID-19 cases in UTLA against BAME (%) - ",report_date),
            subtitle = paste0("Cases up to ", report_date),
-           caption = "Data are from the PHE cases and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup)") 
+           caption = "Data are from the PHE (cases) and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup)") 
     
   return(eth_cases_plot)
 
