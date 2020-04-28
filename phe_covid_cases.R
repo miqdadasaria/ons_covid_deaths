@@ -40,6 +40,7 @@ plot_cases = function(){
       theme(panel.grid.major = element_blank(), 
             panel.grid.minor = element_blank(), 
             plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
+            legend.title = element_blank(), 
             legend.position = "top") +
       labs(title = paste0("Number of COVID-19 cases in UTLA against BAME (%) - ",report_date),
            subtitle = paste0("Cases up to ", report_date),
