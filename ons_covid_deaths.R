@@ -1,6 +1,5 @@
 library("tidyverse")
 library("readxl")
-library("RSQLite")
 library("janitor")
 library("rgdal")
 library("leaflet")
@@ -27,44 +26,61 @@ ethnicity = read_csv("data/ethnicity_summary_lad.csv") %>%
   mutate(BAME=1-proportion) %>% 
   select(LAD19CD,BAME)
 
-plot_la_ethnicity_deaths = function(){
+plot_la_ethnicity_deaths = function(show_all_cause){
   graph_data = deaths %>% 
     group_by(area_code, cause_of_death) %>% 
     summarise(total = sum(number_of_deaths)) %>% 
     ungroup() %>% 
     inner_join(population, by=c("area_code"="area_codes")) %>%
     inner_join(ethnicity, by=c("area_code"="LAD19CD")) %>%
-    mutate(deaths_per_100k = 100000*total/all_ages) %>%
-    select(LA = la_2019_boundaries, BAME, `Deaths per 100k population`=deaths_per_100k, `Cause of Death`=cause_of_death, `Total Deaths`=total)
+    mutate(deaths_per_100k = 100000*total/all_ages, 
+           London = if_else(grepl("^E09", area_code),"London","non-London")) %>%
+    select(LA = la_2019_boundaries, BAME, `Deaths per 100k population`=deaths_per_100k, `Cause of Death`=cause_of_death, `Total Deaths`=total, London)
   
+  plot_title = "Number of deaths in LA against BAME (%)"
+  
+  if(!show_all_cause){
+    graph_data = subset(graph_data,`Cause of Death`=="COVID 19")
+    plot_title = "Number of COVID-19 deaths in LA against BAME (%)"
+  }
   eth_plot = ggplot(graph_data, aes(x=BAME,y=`Deaths per 100k population`,label=LA)) +
-    geom_point(aes(size=`Total Deaths`)) + 
+    geom_point(aes(colour=London)) + 
     geom_smooth(method="lm") +
     xlab("Percentage of population BAME (%)") +
     ylab("Number of deaths per 100k population") +
     scale_x_continuous(labels = scales::percent) +
-    facet_wrap(.~`Cause of Death`, scales="free_y") +
+    scale_colour_manual(values = c("London"="red","non-London"="black")) +
     theme_bw(base_size = 10) + 
     theme(panel.grid.major = element_blank(), 
           panel.grid.minor = element_blank(), 
           plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
-          legend.position = "top") +
-    labs(title = paste0("Number of deaths in LA against BAME (%)"),
+          legend.position = "top",
+          legend.title = element_blank()) +
+    labs(title = plot_title,
          subtitle = paste0("Deaths up to 10th April 2020"),
          caption = "Data are from the ONS deaths (occurrences registered by 18th April 2020) and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup)") 
+  if(show_all_cause){
+    eth_plot = eth_plot +  facet_wrap(.~`Cause of Death`, scales="free_y")
+  }
   
   return(eth_plot)
 }
 
 
-plot_la_deaths = function(la_name){
+plot_la_deaths = function(la_name, show_all_cause){
   la_deaths = deaths %>% filter(area_name == la_name)
   totals = la_deaths %>% 
     group_by(cause_of_death) %>% 
     summarise(total = sum(number_of_deaths)) %>% 
     ungroup() %>% 
     spread(cause_of_death, total) 
-  
+ 
+   plot_title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)")
+
+  if(!show_all_cause){
+    la_deaths = subset(la_deaths,cause_of_death=="COVID 19")
+    plot_title = paste0("Number of COVID-19 deaths in ",la_name," (up to 10th April 2020)")
+  }
   la_plot = ggplot(la_deaths, aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
     geom_col(position="dodge", colour="black") + 
     geom_text(aes(label = scales::comma(number_of_deaths)), position = position_dodge(width = 1), vjust = -0.5, hjust=0.5, size=3.5) +
@@ -78,14 +94,14 @@ plot_la_deaths = function(la_name){
           axis.text.x = element_text(angle = 45, hjust = 1),
           legend.title = element_blank(), 
           legend.position = "top") +
-    labs(title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)"),
+    labs(title = plot_title,
          subtitle = paste0("Total COVID-19: ",totals[[1]]," Total All causes: ",totals[[2]]),
          caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
   
   return(la_plot)
 }
 
-plot_la_deaths_by_week = function(la_name){
+plot_la_deaths_by_week = function(la_name, show_all_cause){
   la_deaths = weekly_deaths %>% 
     filter(area_name == la_name) %>% 
     select(cause_of_death, week_number, place_of_death, number_of_deaths)
@@ -96,8 +112,15 @@ plot_la_deaths_by_week = function(la_name){
               number_of_deaths = sum(number_of_deaths)) %>% 
     ungroup()
 
+  graph_data = bind_rows(la_deaths, totals)
   
-  la_plot = ggplot(bind_rows(la_deaths, totals), 
+   plot_title = paste0("Number of deaths in ",la_name)
+   if(!show_all_cause){
+     graph_data = subset(graph_data,cause_of_death=="COVID 19")
+     plot_title = paste0("Number of COVID-19 deaths in ",la_name)
+   }
+   
+  la_plot = ggplot(graph_data, 
                    aes(x=week_number, y=number_of_deaths, group=place_of_death, colour=place_of_death)) +
     geom_point() + 
     geom_smooth(se=FALSE) +
@@ -111,7 +134,7 @@ plot_la_deaths_by_week = function(la_name){
           plot.margin = unit(c(1.5, 1.5, 1.5, 1.5), "lines"),
           legend.title = element_blank(), 
           legend.position = "top") +
-    labs(title = paste0("Number of deaths in ",la_name),
+    labs(title = plot_title,
          subtitle = paste0("Deaths by week up to 10th April 2020"),
          caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
   

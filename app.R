@@ -11,6 +11,7 @@ library("plotly")
 library("leaflet")
 
 source("ons_covid_deaths.R")
+source("phe_covid_cases.R")
 
 ui = fluidPage(
   titlePanel("ONS COVID-19 Deaths Explorer"),
@@ -22,6 +23,7 @@ ui = fluidPage(
                   "Local authority:", 
                   get_la_list(), 
                   selected = c("Harrow"), multiple = FALSE),
+      checkboxInput("show_all_cause","Show all cause deaths"),
       tags$div(
         HTML("<small><small>
          <p>This site was produced by <a href='http://www.lse.ac.uk/lse-health/people/miqdad-asaria'>Miqdad Asaria</a> 
@@ -35,6 +37,7 @@ ui = fluidPage(
                   tabPanel("Deaths in local authority (Total)", plotOutput("ons_death_plot", height="600px")),
                   tabPanel("Deaths in local authority (weekly)", plotlyOutput("ons_weekly_death_plot",height="500px")),
                   tabPanel("Deaths by BAME population (%)", plotlyOutput("ons_bame_death_plot",height="500px")),
+                  tabPanel("Cases by BAME population (%)", plotlyOutput("phe_bame_cases_plot",height="500px")),
                   tabPanel("Raw data", div(dataTableOutput("raw_data"), style = "font-size:70%"))
       )
     )
@@ -45,17 +48,20 @@ ui = fluidPage(
 server = function(input, output) {
   
   output$ons_death_plot = renderPlot({
-    plot_la_deaths(input$local_authority)
+    plot_la_deaths(input$local_authority, input$show_all_cause)
   })
   
   output$ons_weekly_death_plot = renderPlotly({
-    plot_la_deaths_by_week(input$local_authority)
+    plot_la_deaths_by_week(input$local_authority, input$show_all_cause)
   })
  
   output$ons_bame_death_plot = renderPlotly({
-    plot_la_ethnicity_deaths()
+    plot_la_ethnicity_deaths(input$show_all_cause)
   }) 
   
+  output$phe_bame_cases_plot = renderPlotly({
+    plot_cases()
+  }) 
   
   output$raw_data = renderDataTable({
     datatable(raw_data(),
