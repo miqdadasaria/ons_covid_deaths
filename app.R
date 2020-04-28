@@ -17,7 +17,7 @@ ui = fluidPage(
   titlePanel("ONS COVID-19 Deaths Explorer"),
   sidebarLayout(
     sidebarPanel(
-      tags$h4("Deaths up to 10th April 2020"),
+      tags$h4(paste0("Deaths up to ", deaths_date)),
       tags$h3("Select local authority"),
       selectInput("local_authority", 
                   "Local authority:", 

@@ -9,6 +9,10 @@ library("scales")
 # ons_deaths_dest = "data/ons_deaths.xlsx"
 # download.file(url=ons_deaths_source, destfile=ons_deaths_dest, method = "auto", quiet=FALSE)
 
+#TODO: update these dates everytime new death data downloaded from ONS
+deaths_date = "17th April 2020"
+registered_date = "25th April 2020"
+
 weekly_deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip=3) %>% 
   clean_names() %>%
   filter(geography_type == "Local Authority") %>%
@@ -57,8 +61,8 @@ plot_la_ethnicity_deaths = function(show_all_cause){
           legend.position = "top",
           legend.title = element_blank()) +
     labs(title = plot_title,
-         subtitle = paste0("Deaths up to 10th April 2020"),
-         caption = "Data are from the ONS deaths (occurrences registered by 18th April 2020) and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup)") 
+         subtitle = paste0("Deaths up to ", deaths_date),
+         caption = paste0("Data are from the ONS deaths (occurrences registered by ",registered_date,") and ONS census 2011 (ethnicity)\nPlot by Miqdad Asaria (@miqedup))")) 
   if(show_all_cause){
     eth_plot = eth_plot +  facet_wrap(.~`Cause of Death`, scales="free_y")
   }
@@ -79,7 +83,7 @@ plot_la_deaths = function(la_name, show_all_cause){
 
   if(!show_all_cause){
     la_deaths = subset(la_deaths,cause_of_death=="COVID 19")
-    plot_title = paste0("Number of COVID-19 deaths in ",la_name," (up to 10th April 2020)")
+    plot_title = paste0("Number of COVID-19 deaths in ",la_name," (up to ",deaths_date,")")
   }
   la_plot = ggplot(la_deaths, aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
     geom_col(position="dodge", colour="black") + 
@@ -96,7 +100,7 @@ plot_la_deaths = function(la_name, show_all_cause){
           legend.position = "top") +
     labs(title = plot_title,
          subtitle = paste0("Total COVID-19: ",totals[[1]]," Total All causes: ",totals[[2]]),
-         caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
+         caption = paste0("Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by ",registered_date,")")) 
   
   return(la_plot)
 }
@@ -135,8 +139,8 @@ plot_la_deaths_by_week = function(la_name, show_all_cause){
           legend.title = element_blank(), 
           legend.position = "top") +
     labs(title = plot_title,
-         subtitle = paste0("Deaths by week up to 10th April 2020"),
-         caption = "Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by 18th April 2020)") 
+         subtitle = paste0("Deaths by week up to ",deaths_date),
+         caption = paste0("Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by ",registered_date,")"))
   
   return(la_plot)
 }
@@ -207,7 +211,7 @@ choropleth_map = function(){
     addProviderTiles("Stamen.TonerLite", options = providerTileOptions(noWrap = TRUE)) %>%
     addPolygons(stroke = TRUE, 
         smoothFactor = 1, 
-        fillOpacity = 0.7, 
+        fillOpacity = 0.9, 
         weight = 1, 
         popup = popup_message, 
         fillColor = total_pal(la_map$`Total per 100k`), 
