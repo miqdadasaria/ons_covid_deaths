@@ -29,7 +29,7 @@ plot_cases = function(){
   report_date = max(cases$report_date)
   report_date = paste(day(report_date),month(report_date,TRUE,FALSE),year(report_date),sep=" ")
   
-  eth_cases_plot = ggplot(graph_data, aes(x=BAME,y=`Cases per 100k population`)) +
+  eth_cases_plot = ggplot(graph_data, aes(x=BAME,y=`Cases per 100k population`,label=LA)) +
       geom_point(aes(colour=London)) + 
       geom_smooth(method="lm") +
       xlab("Percentage of population BAME (%)") +
