@@ -72,7 +72,14 @@ plot_la_ethnicity_deaths = function(show_all_cause){
 
 
 plot_la_deaths = function(la_name, show_all_cause){
-  la_deaths = deaths %>% filter(area_name == la_name)
+  if(la_name=="England and Wales"){
+    la_deaths = deaths %>% 
+      group_by(cause_of_death, place_of_death) %>% 
+      summarise(number_of_deaths = sum(number_of_deaths)) %>% 
+      ungroup()
+  } else {
+    la_deaths = deaths %>% filter(area_name == la_name)
+  }
   totals = la_deaths %>% 
     group_by(cause_of_death) %>% 
     summarise(total = sum(number_of_deaths)) %>% 
@@ -85,6 +92,7 @@ plot_la_deaths = function(la_name, show_all_cause){
     la_deaths = subset(la_deaths,cause_of_death=="COVID 19")
     plot_title = paste0("Number of COVID-19 deaths in ",la_name," (up to ",deaths_date,")")
   }
+   
   la_plot = ggplot(la_deaths, aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
     geom_col(position="dodge", colour="black") + 
     geom_text(aes(label = scales::comma(number_of_deaths)), position = position_dodge(width = 1), vjust = -0.5, hjust=0.5, size=3.5) +
@@ -106,18 +114,17 @@ plot_la_deaths = function(la_name, show_all_cause){
 }
 
 plot_la_deaths_by_week = function(la_name, show_all_cause){
-  la_deaths = weekly_deaths %>% 
-    filter(area_name == la_name) %>% 
-    select(cause_of_death, week_number, place_of_death, number_of_deaths)
+  if(la_name=="England and Wales"){ 
+    graph_data = weekly_deaths %>% 
+      group_by(cause_of_death, week_number, place_of_death) %>%
+      summarise(number_of_deaths=sum(number_of_deaths)) 
+      
+  } else {
+    graph_data = weekly_deaths %>% 
+      filter(area_name == la_name) %>% 
+      select(cause_of_death, week_number, place_of_death, number_of_deaths)
+  }
  
-   totals = la_deaths %>% 
-    group_by(week_number, cause_of_death) %>% 
-    summarise(place_of_death = "Total", 
-              number_of_deaths = sum(number_of_deaths)) %>% 
-    ungroup()
-
-  graph_data = bind_rows(la_deaths, totals)
-  
    plot_title = paste0("Number of deaths in ",la_name)
    if(!show_all_cause){
      graph_data = subset(graph_data,cause_of_death=="COVID 19")

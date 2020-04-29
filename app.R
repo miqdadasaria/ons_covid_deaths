@@ -21,8 +21,8 @@ ui = fluidPage(
       tags$h3("Select local authority"),
       selectInput("local_authority", 
                   "Local authority:", 
-                  get_la_list(), 
-                  selected = c("Harrow"), multiple = FALSE),
+                  c("England and Wales",get_la_list()), 
+                  selected = c("England and Wales"), multiple = FALSE),
       checkboxInput("show_all_cause","Show all cause deaths"),
       tags$div(
         HTML("<small><small>
