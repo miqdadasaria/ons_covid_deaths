@@ -107,7 +107,7 @@ plot_la_deaths = function(la_name, show_all_cause){
           legend.title = element_blank(), 
           legend.position = "top") +
     labs(title = plot_title,
-         subtitle = paste0("Total COVID-19: ",totals[[1]]," Total All causes: ",totals[[2]]),
+         subtitle = paste0("Total COVID-19: ",totals[["COVID 19"]]," Total All causes: ",totals[["All causes"]]),
          caption = paste0("Plot by Miqdad Asaria (@miqedup) | Data are from the ONS deaths (occurrences registered by ",registered_date,")")) 
   
   return(la_plot)
