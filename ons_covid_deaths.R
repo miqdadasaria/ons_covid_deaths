@@ -17,7 +17,7 @@ weekly_deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data
   clean_names() %>%
   filter(geography_type == "Local Authority") %>%
   mutate(place_of_death = str_replace(place_of_death," establishment",""))
-  
+
 deaths = weekly_deaths %>% 
   group_by(area_code, area_name, cause_of_death, place_of_death) %>%
   summarise(number_of_deaths = sum(number_of_deaths)) %>%
@@ -85,14 +85,14 @@ plot_la_deaths = function(la_name, show_all_cause){
     summarise(total = sum(number_of_deaths)) %>% 
     ungroup() %>% 
     spread(cause_of_death, total) 
- 
-   plot_title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)")
-
+  
+  plot_title = paste0("Number of deaths in ",la_name," (up to 10th April 2020)")
+  
   if(!show_all_cause){
     la_deaths = subset(la_deaths,cause_of_death=="COVID 19")
     plot_title = paste0("Number of COVID-19 deaths in ",la_name," (up to ",deaths_date,")")
   }
-   
+  
   la_plot = ggplot(la_deaths, aes(x=place_of_death, y=number_of_deaths, group=cause_of_death, fill=cause_of_death)) +
     geom_col(position="dodge", colour="black") + 
     geom_text(aes(label = scales::comma(number_of_deaths)), position = position_dodge(width = 1), vjust = -0.5, hjust=0.5, size=3.5) +
@@ -118,19 +118,19 @@ plot_la_deaths_by_week = function(la_name, show_all_cause){
     graph_data = weekly_deaths %>% 
       group_by(cause_of_death, week_number, place_of_death) %>%
       summarise(number_of_deaths=sum(number_of_deaths)) 
-      
+    
   } else {
     graph_data = weekly_deaths %>% 
       filter(area_name == la_name) %>% 
       select(cause_of_death, week_number, place_of_death, number_of_deaths)
   }
- 
-   plot_title = paste0("Number of deaths in ",la_name)
-   if(!show_all_cause){
-     graph_data = subset(graph_data,cause_of_death=="COVID 19")
-     plot_title = paste0("Number of COVID-19 deaths in ",la_name)
-   }
-   
+  
+  plot_title = paste0("Number of deaths in ",la_name)
+  if(!show_all_cause){
+    graph_data = subset(graph_data,cause_of_death=="COVID 19")
+    plot_title = paste0("Number of COVID-19 deaths in ",la_name)
+  }
+  
   la_plot = ggplot(graph_data, 
                    aes(x=week_number, y=number_of_deaths, group=place_of_death, colour=place_of_death)) +
     geom_point() + 
@@ -169,17 +169,17 @@ raw_data = function(){
 
 
 make_popup_messages = function(map){
-    popup_messages = paste0("<b>Name: </b>",map$lad19nm,"<br>",
-                            "<b>Total Population: </b>",scales::comma(map$Population),"<br>",
-                            "<b>COVID-19 Deaths</b> <br>",
-                            "<b>Total (per 100k pop): </b>",map$Total," (",round(map$`Total per 100k`,1),")<br>",
-                            "<b>Hospital (per 100k pop): </b>",map$Hospital," (",round(map$`Hospital per 100k`,1),")<br>",
-                            "<b>Care home (per 100k pop): </b>",map$`Care home`," (",round(map$`Care home per 100k`,1),")<br>",
-                            "<b>Home (per 100k pop): </b>",map$Home," (",round(map$`Home per 100k`,1),")<br>",
-                            "<b>Hospice (per 100k pop): </b>",map$Hospice," (",round(map$`Hospice per 100k`,1),")<br>",
-                            "<b>Other communal (per 100k pop): </b>",map$`Other communal`," (",round(map$`Other communal per 100k`,1),")<br>",
-                            "<b>Elsewhere (per 100k pop): </b>",map$Elsewhere," (",round(map$`Elsewhere per 100k`,1),")<br>")
- 
+  popup_messages = paste0("<b>Name: </b>",map$lad19nm,"<br>",
+                          "<b>Total Population: </b>",scales::comma(map$Population),"<br>",
+                          "<b>COVID-19 Deaths</b> <br>",
+                          "<b>Total (per 100k pop): </b>",map$Total," (",round(map$`Total per 100k`,1),")<br>",
+                          "<b>Hospital (per 100k pop): </b>",map$Hospital," (",round(map$`Hospital per 100k`,1),")<br>",
+                          "<b>Care home (per 100k pop): </b>",map$`Care home`," (",round(map$`Care home per 100k`,1),")<br>",
+                          "<b>Home (per 100k pop): </b>",map$Home," (",round(map$`Home per 100k`,1),")<br>",
+                          "<b>Hospice (per 100k pop): </b>",map$Hospice," (",round(map$`Hospice per 100k`,1),")<br>",
+                          "<b>Other communal (per 100k pop): </b>",map$`Other communal`," (",round(map$`Other communal per 100k`,1),")<br>",
+                          "<b>Elsewhere (per 100k pop): </b>",map$Elsewhere," (",round(map$`Elsewhere per 100k`,1),")<br>")
+  
   return(popup_messages)  
 }
 
@@ -201,14 +201,14 @@ choropleth_map = function(){
            `Total per 100k` = round(Total*100000/population,1)) %>%
     select(lad19cd=area_code, area_name, Population = population, Cause = cause_of_death, Hospital, `Care home`, Home, Hospice, `Other communal`, Elsewhere, Total, 
            `Total per 100k`, `Hospital per 100k`, `Care home per 100k`, `Home per 100k`, `Hospice per 100k`, `Other communal per 100k`, `Elsewhere per 100k`)
-    
+  
   la_map = subset(la_map, lad19cd %in% death_data$lad19cd)
   la_map@data = inner_join(la_map@data, death_data)
   
   popup_message = make_popup_messages(la_map@data)
   
   total_pal = colorBin("Reds", la_map$`Total per 100k`, n=5, pretty = FALSE)
-
+  
   labels = sprintf(
     "<strong>%s</strong><br/>%g COVID-19 deaths per 100k",
     la_map$lad19nm, la_map$`Total per 100k`
@@ -217,27 +217,23 @@ choropleth_map = function(){
   choropleth_map = leaflet(la_map) %>% 
     addProviderTiles("Stamen.TonerLite", options = providerTileOptions(noWrap = TRUE)) %>%
     addPolygons(stroke = TRUE, 
-        smoothFactor = 1, 
-        fillOpacity = 0.9, 
-        weight = 1, 
-        popup = popup_message, 
-        fillColor = total_pal(la_map$`Total per 100k`), 
-        color="black",
-        group="Total",
-        label = labels,
-        labelOptions = labelOptions(
-          style = list("font-weight" = "normal", padding = "3px 8px"),
-          textsize = "12px",
-          direction = "auto")) %>%
+                smoothFactor = 1, 
+                fillOpacity = 0.9, 
+                weight = 1, 
+                popup = popup_message, 
+                fillColor = total_pal(la_map$`Total per 100k`), 
+                color="black",
+                group="Total",
+                label = labels,
+                labelOptions = labelOptions(
+                  style = list("font-weight" = "normal", padding = "3px 8px"),
+                  textsize = "12px",
+                  direction = "auto")) %>%
     addLegend(pal = total_pal, values = ~`Total per 100k`, opacity = 0.7, 
-      title = "Deaths per 100k<br> population", 
-      position = "topright",
-      labFormat = labelFormat(transform = function(x) round(x))
-      ) %>%
+              title = "Deaths per 100k<br> population", 
+              position = "topright",
+              labFormat = labelFormat(transform = function(x) round(x))
+    ) %>%
     setView(lng=mean(la_map$long), lat=mean(la_map$lat), zoom=7) 
   return(choropleth_map)
 }
-
-
-
-
