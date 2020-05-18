@@ -4,16 +4,16 @@ library("janitor")
 library("rgdal")
 library("leaflet")
 library("scales")
-
-# ons_deaths_source = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fhealthandsocialcare%2fcausesofdeath%2fdatasets%2fdeathregistrationsandoccurrencesbylocalauthorityandhealthboard%2f2020/lahbtables.xlsx"
-# ons_deaths_dest = "data/ons_deaths.xlsx"
-# download.file(url=ons_deaths_source, destfile=ons_deaths_dest, method = "auto", quiet=FALSE)
+#ons_deaths_source = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fhealthandsocialcare%2fcausesofdeath%2fdatasets%2fdeathregistrationsandoccurrencesbylocalauthorityandhealthboard%2f2020/lahbtablesweek18.xlsx"
+# ons_deaths_source_old = "https://www.ons.gov.uk/file?uri=%2fpeoplepopulationandcommunity%2fhealthandsocialcare%2fcausesofdeath%2fdatasets%2fdeathregistrationsandoccurrencesbylocalauthorityandhealthboard%2f2020/lahbtables.xlsx"
+ons_deaths_dest = "data/ons_deaths.xlsx"
+#download.file(url=ons_deaths_source, destfile=ons_deaths_dest, method = "auto", quiet=FALSE)
 
 #TODO: update these dates everytime new death data downloaded from ONS
-deaths_date = "17th April 2020"
-registered_date = "25th April 2020"
+deaths_date = "1st May 2020"
+registered_date = "9th May 2020"
 
-weekly_deaths = read_excel("data/ons_deaths.xlsx", sheet="Occurrences - All data", skip=3) %>% 
+weekly_deaths = read_excel(ons_deaths_dest, sheet="Occurrences - All data", skip=3) %>% 
   clean_names() %>%
   filter(geography_type == "Local Authority") %>%
   mutate(place_of_death = str_replace(place_of_death," establishment",""))
@@ -23,7 +23,8 @@ deaths = weekly_deaths %>%
   summarise(number_of_deaths = sum(number_of_deaths)) %>%
   ungroup() 
 
-population = read_csv("data/la_population.csv") %>% select(1:3)
+#population = read_csv("data/la_population.csv") %>% select(1:3)
+population = read_excel("data/la_population_2019.xlsx") %>% clean_names() %>% select(1,2,4)
 
 ethnicity = read_csv("data/ethnicity_summary_lad.csv") %>% 
   filter(ethnicity=="White") %>% 
@@ -35,11 +36,11 @@ plot_la_ethnicity_deaths = function(show_all_cause){
     group_by(area_code, cause_of_death) %>% 
     summarise(total = sum(number_of_deaths)) %>% 
     ungroup() %>% 
-    inner_join(population, by=c("area_code"="area_codes")) %>%
+    inner_join(population, by=c("area_code"="lad19cd")) %>%
     inner_join(ethnicity, by=c("area_code"="LAD19CD")) %>%
     mutate(deaths_per_100k = 100000*total/all_ages, 
            London = if_else(grepl("^E09", area_code),"London","non-London")) %>%
-    select(LA = la_2019_boundaries, BAME, `Deaths per 100k population`=deaths_per_100k, `Cause of Death`=cause_of_death, `Total Deaths`=total, London)
+    select(LA = lad19nm, BAME, `Deaths per 100k population`=deaths_per_100k, `Cause of Death`=cause_of_death, `Total Deaths`=total, London)
   
   plot_title = "Number of deaths in LA against BAME (%)"
   
@@ -160,7 +161,7 @@ raw_data = function(){
   raw_data = deaths %>% 
     spread(place_of_death, number_of_deaths) %>% 
     mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`) %>%
-    inner_join(population %>% select(area_code=area_codes,population=all_ages)) %>%
+    inner_join(population %>% select(area_code=lad19cd,population=all_ages)) %>%
     mutate(`Deaths per 100k pop` = round(Total*100000/population)) %>%
     select(LA = area_name, Population = population, Cause = cause_of_death, Hospital, `Care home`, Home, Hospice, `Other communal`, Elsewhere, Total, `Deaths per 100k pop`) %>%
     arrange(desc(Cause),desc(`Deaths per 100k pop`))
@@ -191,7 +192,7 @@ choropleth_map = function(){
     filter(cause_of_death=="COVID 19") %>%
     spread(place_of_death, number_of_deaths) %>% 
     mutate(Total = `Care home` + Elsewhere + Home + Hospice + Hospital + `Other communal`) %>%
-    inner_join(population %>% select(area_code=area_codes,population=all_ages)) %>%
+    inner_join(population %>% select(area_code=lad19cd,population=all_ages)) %>%
     mutate(`Care home per 100k` = `Care home`*100000/population,
            `Elsewhere per 100k` = Elsewhere*100000/population,
            `Home per 100k` = Home*100000/population,

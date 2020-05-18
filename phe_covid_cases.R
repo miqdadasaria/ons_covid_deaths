@@ -21,7 +21,7 @@ plot_cases = function(){
   graph_data = ethnicity %>% 
     inner_join(population) %>% 
     inner_join(cases, by=c("UTLA19CD"="area_code")) %>%
-    mutate(cases_per_100k = cases*100000/population,
+    mutate(cases_per_100k = cases1*100000/population,
            London = if_else(grepl("^E09", UTLA19CD),"London","non-London")) %>%
     arrange(desc(cases_per_100k)) %>%
     select(LA=UTLA19NM, BAME, `Cases per 100k population`=cases_per_100k,London)
